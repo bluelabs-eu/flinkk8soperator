@@ -13,6 +13,11 @@
 FlinkK8sOperator is a [Kubernetes operator](https://coreos.com/operators/) that manages [Flink](https://flink.apache.org/) applications on Kubernetes. The operator acts as control plane to manage the complete deployment lifecycle of the application.
 
 
+## Bluelabs
+
+Edit version in [bluelabs-publish-operator.sh](bluelabs-publish-operator.sh) script and run script to build and publish operator
+Edit `appVersion` in [chart](chart/Chart.yaml) and run [bluelabs-publish-chart.sh](bluelabs-publish-chart.sh) script to publish chart
+
 ## Project Status
 
 *Beta*

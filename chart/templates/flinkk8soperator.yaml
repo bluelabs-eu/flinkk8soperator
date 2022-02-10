@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flinkoperator
+  namespace: data
+  labels:
+    app: flinkoperator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flinkoperator
+  template:
+    metadata:
+      labels:
+        app: flinkoperator
+        app.kubernetes.io/version: {{ default .Chart.AppVersion .Values.image.tag }}
+    spec:
+      serviceAccountName: flinkoperator
+      {{ if .Values.nodeAffinityDomain }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: domain
+                operator: In
+                values:
+                - {{ .Values.nodeAffinityDomain}}
+      tolerations:
+        - key: "domain"
+          operator: "Equal"
+          value: "{{ .Values.nodeAffinityDomain}}"
+          effect: "NoSchedule"
+      {{ end }}
+      volumes:
+      - name: config-volume
+        configMap:
+          name: flink-operator-config
+          items:
+          - key: config
+            path: config.yaml
+      containers:
+      - name: flinkoperator-gojson
+        image: "{{ .Values.image.repository }}:v{{ default .Chart.AppVersion .Values.image.tag }}"
+        command:
+        - flinkoperator
+        args:
+        - --logtostderr
+        - --config
+        - /etc/flinkoperator/config*/config.yaml
+        env:
+        - name: OPERATOR_NAME
+          value: flinkk8soperator
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 10254
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/flinkoperator/config

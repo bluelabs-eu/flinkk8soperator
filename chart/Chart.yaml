@@ -1,0 +1,14 @@
+apiVersion: v2
+name: lyft-flink-k8s-operator
+version: 0.1.6
+appVersion: 0.5.3
+description: Flink Operator by Lyft
+type: application
+keywords:
+  - flink
+  - operator
+sources:
+  - https://github.com/bluelabs-eu/flinkk8soperator/tree/bluelabs-main
+maintainers:
+  - name: Nikola Stanisavljevic
+    email: nikola@bluelabs.eu

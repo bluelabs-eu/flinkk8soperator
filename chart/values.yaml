@@ -1,0 +1,20 @@
+image: 
+  repository: eu.gcr.io/bluelabs-container-registry/data-lyft-flink-operator
+  tag:
+ingress:
+  suffix: flinkingress
+resources:
+  # limits:
+  #   cpu: 2
+  #   memory: 2Gi
+  requests:
+    cpu: 1
+    memory: 512Mi
+
+retry:
+  baseBackoffDuration: 20s
+  maxBackoffDuration: 60s
+  maxErrDuration: 5m
+
+limitNamespace: data
+# nodeAffinityDomain: data
