@@ -3,9 +3,9 @@
 set -o errexit
 set -o nounset
 set -o pipefail
-
+chmod +x vendor/k8s.io/code-generator/generate-groups.sh
 vendor/k8s.io/code-generator/generate-groups.sh \
-deepcopy,client \
+"deepcopy,client" \
 github.com/lyft/flinkk8soperator/pkg/client \
 github.com/lyft/flinkk8soperator/pkg/apis \
 app:v1beta1 \

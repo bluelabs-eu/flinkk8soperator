@@ -43,16 +43,10 @@ spec:
       containers:
       - name: flinkoperator-gojson
         image: "{{ .Values.image.repository }}:v{{ default .Chart.AppVersion .Values.image.tag }}"
-        command:
-        - flinkoperator
-        args:
-        - --logtostderr
-        - --config
-        - /etc/flinkoperator/config*/config.yaml
         env:
         - name: OPERATOR_NAME
           value: flinkk8soperator
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
           - containerPort: 10254
         resources:

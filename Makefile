@@ -12,7 +12,7 @@ compile: generate
 	go build -o bin/flinkoperator ./cmd/flinkk8soperator/main.go
 
 .PHONY: linux_compile
-linux_compile: generate
+linux_compile:
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o /artifacts/flinkoperator ./cmd/flinkk8soperator/main.go
 
 gen-config:

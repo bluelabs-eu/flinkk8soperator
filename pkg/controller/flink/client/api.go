@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	resty "gopkg.in/resty.v1"
 	"net"
 	"strings"
 	"time"
@@ -12,7 +13,6 @@ import (
 
 	"net/http"
 
-	"github.com/go-resty/resty"
 	"github.com/lyft/flinkk8soperator/pkg/controller/config"
 	"github.com/lyft/flytestdlib/logger"
 	"github.com/lyft/flytestdlib/promutils"

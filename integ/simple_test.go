@@ -1,6 +1,7 @@
 package integ
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -9,7 +10,7 @@ import (
 
 	"github.com/lyft/flinkk8soperator/pkg/apis/app/v1beta1"
 	"github.com/lyft/flinkk8soperator/pkg/controller/flink/client"
-	"github.com/prometheus/common/log"
+	log "github.com/sirupsen/logrus"
 	. "gopkg.in/check.v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,7 +47,7 @@ func updateAndValidate(c *C, s *IntegSuite, name string, updateFn func(app *v1be
 	// wait for the old cluster to be cleaned up
 	for {
 		pods, err := s.Util.KubeClient.CoreV1().Pods(s.Util.Namespace.Name).
-			List(v1.ListOptions{LabelSelector: "flink-app=" + name})
+			List(context.Background(), v1.ListOptions{LabelSelector: "flink-app=" + name})
 		c.Assert(err, IsNil)
 
 		oldPodFound := false
@@ -86,7 +87,7 @@ func (s *IntegSuite) TestSimple(c *C) {
 	c.Assert(s.Util.WaitForAllTasksRunning(config.Name), IsNil)
 
 	pods, err := s.Util.KubeClient.CoreV1().Pods(s.Util.Namespace.Name).
-		List(v1.ListOptions{LabelSelector: "integTest=test_simple"})
+		List(context.Background(), v1.ListOptions{LabelSelector: "integTest=test_simple"})
 	c.Assert(err, IsNil)
 	c.Assert(len(pods.Items), Equals, 3)
 	for _, pod := range pods.Items {
@@ -102,7 +103,7 @@ func (s *IntegSuite) TestSimple(c *C) {
 	// check that the pods have the new image
 	c.Assert(newApp.Spec.Image, Equals, NewImage)
 	pods, err = s.Util.KubeClient.CoreV1().Pods(s.Util.Namespace.Name).
-		List(v1.ListOptions{LabelSelector: "integTest=test_simple"})
+		List(context.Background(), v1.ListOptions{LabelSelector: "integTest=test_simple"})
 	c.Assert(err, IsNil)
 	c.Assert(len(pods.Items), Equals, 3)
 	for _, pod := range pods.Items {
@@ -192,7 +193,7 @@ func (s *IntegSuite) TestSimple(c *C) {
 		c.Assert(err, IsNil)
 
 		newApp.Spec.ForceRollback = true
-		newApp, err = s.Util.FlinkApps().Update(newApp)
+		newApp, err = s.Util.FlinkApps().Update(context.Background(), newApp, v1.UpdateOptions{})
 		c.Assert(err, IsNil)
 
 		// we should end up in the DeployFailed phase
@@ -214,7 +215,7 @@ func (s *IntegSuite) TestSimple(c *C) {
 	}
 
 	// delete the application and ensure everything is cleaned up successfully
-	c.Assert(s.Util.FlinkApps().Delete(config.Name, &v1.DeleteOptions{}), IsNil)
+	c.Assert(s.Util.FlinkApps().Delete(context.Background(), config.Name, v1.DeleteOptions{}), IsNil)
 
 	// validate that a savepoint was taken and the job was cancelled
 	var app *v1beta1.FlinkApplication
@@ -247,13 +248,13 @@ func (s *IntegSuite) TestSimple(c *C) {
 
 	// delete our finalizer
 	app.Finalizers = []string{}
-	_, err = s.Util.FlinkApps().Update(app)
+	_, err = s.Util.FlinkApps().Update(context.Background(), app, v1.UpdateOptions{})
 	c.Assert(err, IsNil)
 
 	// wait until all pods are gone
 	for {
 		pods, err = s.Util.KubeClient.CoreV1().Pods(s.Util.Namespace.Name).
-			List(v1.ListOptions{LabelSelector: "integTest=test_simple"})
+			List(context.Background(), v1.ListOptions{LabelSelector: "integTest=test_simple"})
 		c.Assert(err, IsNil)
 		if len(pods.Items) == 0 {
 			break
@@ -348,10 +349,10 @@ func (s *IntegSuite) TestRecovery(c *C) {
 	c.Assert(s.Util.WaitForAllTasksRunning(config.Name), IsNil)
 
 	// delete the application
-	c.Assert(s.Util.FlinkApps().Delete(config.Name, &v1.DeleteOptions{}), IsNil)
+	c.Assert(s.Util.FlinkApps().Delete(context.Background(), config.Name, v1.DeleteOptions{}), IsNil)
 	for {
 		pods, err := s.Util.KubeClient.CoreV1().Pods(s.Util.Namespace.Name).
-			List(v1.ListOptions{LabelSelector: "integTest=test_recovery"})
+			List(context.Background(), v1.ListOptions{LabelSelector: "integTest=test_recovery"})
 		c.Assert(err, IsNil)
 		if len(pods.Items) == 0 {
 			break

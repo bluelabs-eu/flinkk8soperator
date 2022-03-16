@@ -137,7 +137,7 @@ func (s *FlinkStateMachine) Handle(ctx context.Context, application *v1beta1.Fli
 	if updateStatus {
 		now := v1.NewTime(s.clock.Now())
 		application.Status.LastUpdatedAt = &now
-		updateAppErr := s.k8Cluster.UpdateStatus(ctx, application)
+		updateAppErr := s.k8Cluster.UpdateStatus(ctx, application.DeepCopy())
 		if updateAppErr != nil {
 			s.metrics.errorCounterPhaseMap[currentPhase].Inc(ctx)
 			return updateAppErr
@@ -319,7 +319,7 @@ func (s *FlinkStateMachine) handleRescaling(ctx context.Context, app *v1beta1.Fl
 
 	if jmDeployment != nil {
 		jmDeployment.Labels[flink.FlinkAppHash] = newHash
-		if s.k8Cluster.UpdateK8Object(ctx, jmDeployment) != nil {
+		if s.k8Cluster.UpdateK8Object(ctx, jmDeployment.DeepCopy()) != nil {
 			return statusUnchanged, err
 		}
 	}
@@ -336,7 +336,7 @@ func (s *FlinkStateMachine) handleRescaling(ctx context.Context, app *v1beta1.Fl
 		}
 
 		tmDeployment.Labels[flink.FlinkAppHash] = newHash
-		if s.k8Cluster.UpdateK8Object(ctx, tmDeployment) != nil {
+		if s.k8Cluster.UpdateK8Object(ctx, tmDeployment.DeepCopy()) != nil {
 			return statusUnchanged, err
 		}
 	}
@@ -684,7 +684,7 @@ func (s *FlinkStateMachine) updateGenericService(ctx context.Context, app *v1bet
 		service.Spec.Selector[flink.PodDeploymentSelector] = selector
 		// remove the old app hash selector if it's still present
 		delete(service.Spec.Selector, flink.FlinkAppHash)
-		err = s.k8Cluster.UpdateK8Object(ctx, service)
+		err = s.k8Cluster.UpdateK8Object(ctx, service.DeepCopy())
 		if err != nil {
 			return err
 		}
@@ -942,7 +942,7 @@ func (s *FlinkStateMachine) addFinalizerIfMissing(ctx context.Context, applicati
 
 	// finalizer not present; add
 	application.Finalizers = append(application.Finalizers, finalizer)
-	return s.k8Cluster.UpdateK8Object(ctx, application)
+	return s.k8Cluster.UpdateK8Object(ctx, application.DeepCopy())
 }
 
 func removeString(list []string, target string) []string {
@@ -958,7 +958,7 @@ func removeString(list []string, target string) []string {
 
 func (s *FlinkStateMachine) clearFinalizers(ctx context.Context, app *v1beta1.FlinkApplication) (bool, error) {
 	app.Finalizers = removeString(app.Finalizers, jobFinalizer)
-	return statusUnchanged, s.k8Cluster.UpdateK8Object(ctx, app)
+	return statusUnchanged, s.k8Cluster.UpdateK8Object(ctx, app.DeepCopy())
 }
 
 func jobFinished(job *client.FlinkJobOverview) bool {

@@ -1,13 +1,14 @@
 package integ
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
 
 	"github.com/lyft/flinkk8soperator/pkg/apis/app/v1beta1"
-	"github.com/prometheus/common/log"
+	log "github.com/sirupsen/logrus"
 	. "gopkg.in/check.v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -36,7 +37,7 @@ func failingJobTest(s *IntegSuite, c *C, testName string, causeFailure func()) {
 	app, err := s.Util.GetFlinkApplication(config.Name)
 	c.Assert(err, IsNil)
 	app.Spec.Image = NewImage
-	_, err = s.Util.FlinkApps().Update(app)
+	_, err = s.Util.FlinkApps().Update(context.Background(), app, v1.UpdateOptions{})
 	c.Assert(err, IsNil)
 
 	// because the checkpoint will fail, the app should move to deploy failed
@@ -52,11 +53,11 @@ func failingJobTest(s *IntegSuite, c *C, testName string, causeFailure func()) {
 	c.Assert(err, IsNil)
 
 	// delete the application and ensure everything is cleaned up successfully
-	c.Assert(s.Util.FlinkApps().Delete(app.Name, &v1.DeleteOptions{}), IsNil)
+	c.Assert(s.Util.FlinkApps().Delete(context.Background(), app.Name, v1.DeleteOptions{}), IsNil)
 
 	for {
 		pods, err := s.Util.KubeClient.CoreV1().Pods(s.Util.Namespace.Name).
-			List(v1.ListOptions{LabelSelector: "integTest=" + testName})
+			List(context.Background(), v1.ListOptions{LabelSelector: "integTest=" + testName})
 		c.Assert(err, IsNil)
 		if len(pods.Items) == 0 {
 			break
