@@ -19,4 +19,4 @@ ENV PATH="/artifacts:${PATH}"
 FROM alpine:3.15
 RUN apk add --no-cache curl ca-certificates && update-ca-certificates
 COPY --from=builder /artifacts /bin
-ENTRYPOINT ["/bin/flinkoperator", "--logtostderr", "--config", "/etc/flinkoperator/config*/config.yaml"]
+CMD ["flinkoperator"]
