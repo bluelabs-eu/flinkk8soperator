@@ -1,6 +1,7 @@
 package integ
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,7 +12,7 @@ import (
 	integFramework "github.com/lyft/flinkk8soperator/integ/utils"
 	controllerConfig "github.com/lyft/flinkk8soperator/pkg/controller/config"
 	flyteConfig "github.com/lyft/flytestdlib/config"
-	"github.com/prometheus/common/log"
+	log "github.com/sirupsen/logrus"
 	. "gopkg.in/check.v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -132,7 +133,7 @@ func (s *IntegSuite) TearDownTest(c *C) {
 		}
 	}
 
-	err = s.Util.FlinkApps().DeleteCollection(nil, v1.ListOptions{})
+	err = s.Util.FlinkApps().DeleteCollection(context.Background(), v1.DeleteOptions{}, v1.ListOptions{})
 	if err != nil {
 		log.Fatalf("Failed to clean up flink applications")
 	}

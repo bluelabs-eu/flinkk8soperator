@@ -74,6 +74,19 @@ rules:
    - update
    - delete
    - patch
+  # Allow Access to networking
+ - apiGroups:
+   - networking.k8s.io
+   resources:
+   - ingresses
+   - ingresses/status
+   verbs:
+   - get
+   - list
+   - watch
+   - create
+   - update
+   - delete
 ---
 # Create a Service Account for flinkk8soperator
 apiVersion: v1

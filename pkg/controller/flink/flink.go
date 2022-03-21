@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 
 	"github.com/lyft/flinkk8soperator/pkg/controller/common"
@@ -24,6 +23,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const proxyURL = "http://localhost:%d/api/v1/namespaces/%s/services/%s:8081/proxy"
@@ -409,7 +410,7 @@ func (f *Controller) DeleteOldResourcesForApp(ctx context.Context, app *v1beta1.
 		return err
 	}
 
-	oldObjects := make([]metav1.Object, 0)
+	oldObjects := make([]k8sclient.Object, 0)
 
 	for _, d := range deployments.Items {
 		if d.Labels[FlinkAppHash] != "" &&
@@ -439,7 +440,7 @@ func (f *Controller) DeleteOldResourcesForApp(ctx context.Context, app *v1beta1.
 	deletedHashes := make(map[string]bool)
 
 	for _, resource := range oldObjects {
-		err := f.k8Cluster.DeleteK8Object(ctx, resource.(runtime.Object))
+		err := f.k8Cluster.DeleteK8Object(ctx, resource)
 		if err != nil {
 			f.metrics.deleteResourceFailedCounter.Inc(ctx)
 			return err
@@ -881,7 +882,7 @@ func (f *Controller) DeleteResourcesForAppWithHash(ctx context.Context, app *v1b
 		return err
 	}
 
-	oldObjects := make([]metav1.Object, 0)
+	oldObjects := make([]k8sclient.Object, 0)
 
 	for _, d := range deployments.Items {
 		if d.Labels[FlinkAppHash] == hash &&
@@ -907,7 +908,7 @@ func (f *Controller) DeleteResourcesForAppWithHash(ctx context.Context, app *v1b
 	deletedHashes := make(map[string]bool)
 
 	for _, resource := range oldObjects {
-		err := f.k8Cluster.DeleteK8Object(ctx, resource.(runtime.Object))
+		err := f.k8Cluster.DeleteK8Object(ctx, resource)
 		if err != nil {
 			f.metrics.deleteResourceFailedCounter.Inc(ctx)
 			return err

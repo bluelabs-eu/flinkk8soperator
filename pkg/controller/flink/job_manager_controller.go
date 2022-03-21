@@ -95,7 +95,7 @@ func (j *JobManagerController) CreateIfNotExist(ctx context.Context, application
 	jobManagerDeployment := FetchJobMangerDeploymentCreateObj(application, hash)
 	podSelector := jobManagerDeployment.Spec.Selector.MatchLabels[PodDeploymentSelector]
 
-	err := j.k8Cluster.CreateK8Object(ctx, jobManagerDeployment)
+	err := j.k8Cluster.CreateK8Object(ctx, jobManagerDeployment.DeepCopy())
 	if err != nil {
 		if !k8_err.IsAlreadyExists(err) {
 			j.metrics.deploymentCreationFailure.Inc(ctx)
@@ -125,7 +125,7 @@ func (j *JobManagerController) CreateIfNotExist(ctx context.Context, application
 	// create the generic job manager service, used by the ingress to provide UI access
 	// there will only be one of these across the lifetime of the application
 	genericService := FetchJobManagerServiceCreateObj(application, podSelector)
-	err = j.k8Cluster.CreateK8Object(ctx, genericService)
+	err = j.k8Cluster.CreateK8Object(ctx, genericService.DeepCopy())
 	if err != nil {
 		if !k8_err.IsAlreadyExists(err) {
 			j.metrics.serviceCreationFailure.Inc(ctx)
@@ -144,7 +144,7 @@ func (j *JobManagerController) CreateIfNotExist(ctx context.Context, application
 	versionedJobManagerService.Name = VersionedJobManagerServiceName(application, hash)
 	versionedJobManagerService.Labels[FlinkAppHash] = hash
 
-	err = j.k8Cluster.CreateK8Object(ctx, versionedJobManagerService)
+	err = j.k8Cluster.CreateK8Object(ctx, versionedJobManagerService.DeepCopy())
 	if err != nil {
 		if !k8_err.IsAlreadyExists(err) {
 			j.metrics.serviceCreationFailure.Inc(ctx)
@@ -159,7 +159,7 @@ func (j *JobManagerController) CreateIfNotExist(ctx context.Context, application
 
 	if config.GetConfig().FlinkIngressURLFormat != "" {
 		jobManagerIngress := FetchJobManagerIngressCreateObj(application)
-		err = j.k8Cluster.CreateK8Object(ctx, jobManagerIngress)
+		err = j.k8Cluster.CreateK8Object(ctx, jobManagerIngress.DeepCopy())
 		if err != nil {
 			if !k8_err.IsAlreadyExists(err) {
 				j.metrics.ingressCreationFailure.Inc(ctx)
@@ -303,7 +303,7 @@ func FetchJobManagerContainerObj(application *v1beta1.FlinkApplication) *coreV1.
 		EnvFrom:         jmConfig.EnvConfig.EnvFrom,
 		VolumeMounts:    application.Spec.VolumeMounts,
 		ReadinessProbe: &coreV1.Probe{
-			Handler: coreV1.Handler{
+			ProbeHandler: coreV1.ProbeHandler{
 				HTTPGet: &coreV1.HTTPGetAction{
 					Path: JobManagerReadinessPath,
 					Port: intstr.FromInt(int(getUIPort(application))),
