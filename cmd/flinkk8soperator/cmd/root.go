@@ -186,5 +186,5 @@ func operatorEntryPoint(ctx context.Context, metricsScope promutils.Scope,
 
 	// Start the Cmd
 	logger.Infof(ctx, "Starting the Cmd.")
-	return stopCh, mgr.Start(context.Background())
+	return stopCh, mgr.Start(ctx)
 }
