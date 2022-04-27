@@ -16,5 +16,5 @@ if [ $debug == true ]; then
   build_version=${build_version}-debug
 fi
 echo "Building version $build_version, with_debug_flags=$debug"
-docker buildx build --platform=linux/amd64 --build-arg with_debug_flags=$debug -t "eu.gcr.io/bluelabs-container-registry/data-lyft-flink-operator:v$version" .
-docker push "eu.gcr.io/bluelabs-container-registry/data-lyft-flink-operator:v$version"
+docker buildx build --platform=linux/amd64 --build-arg with_debug_flags=$debug -t "eu.gcr.io/bluelabs-container-registry/data-lyft-flink-operator:v$build_version" .
+docker push "eu.gcr.io/bluelabs-container-registry/data-lyft-flink-operator:v$build_version"
