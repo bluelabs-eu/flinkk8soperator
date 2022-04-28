@@ -1,8 +1,10 @@
 image: 
   repository: eu.gcr.io/bluelabs-container-registry/data-lyft-flink-operator
   tag:
+  pullPolicy: Always
 ingress:
   suffix: flinkingress
+debug: false
 resources:
   # limits:
   #   cpu: 2

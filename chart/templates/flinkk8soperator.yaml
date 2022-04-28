@@ -43,16 +43,35 @@ spec:
       containers:
       - name: flinkoperator-gojson
         image: "{{ .Values.image.repository }}:v{{ default .Chart.AppVersion .Values.image.tag }}"
+        {{ if .Values.debug }}
+        securityContext:
+          capabilities:
+            add: [ "SYS_PTRACE" ]
         command:
-        - flinkoperator
+        - dlv
         args:
-        - --logtostderr
-        - --config
-        - /etc/flinkoperator/config*/config.yaml
+          - "--listen=:2345"
+          - "--headless=true"
+          - "--api-version=2"
+          - "--accept-multiclient"
+          - "exec"
+          - "/bin/flinkoperator"
+          - "--"
+          - "--logtostderr"
+          - "--config"
+          - "/etc/flinkoperator/config*/config.yaml"
+        {{ else }}
+        command:
+          - flinkoperator
+        args:
+          - --logtostderr
+          - --config
+          - /etc/flinkoperator/config*/config.yaml
+        {{ end }}
         env:
         - name: OPERATOR_NAME
           value: flinkk8soperator
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ .Values.image.pullPolicy}}
         ports:
           - containerPort: 10254
         resources:

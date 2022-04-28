@@ -109,10 +109,6 @@ func GetTaskManagerPorts(app *v1beta1.FlinkApplication) []coreV1.ContainerPort {
 			Name:          FlinkInternalMetricPortName,
 			ContainerPort: getInternalMetricsQueryPort(app),
 		},
-		{
-			Name:          "http",
-			ContainerPort: 9249,
-		},
 	}
 }
 
