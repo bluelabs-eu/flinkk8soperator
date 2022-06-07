@@ -182,6 +182,11 @@ func (in *FlinkApplicationSpec) DeepCopyInto(out *FlinkApplicationSpec) {
 		*out = new(int32)
 		**out = **in
 	}
+	if in.AutoSavepointSeconds != nil {
+		in, out := &in.AutoSavepointSeconds, &out.AutoSavepointSeconds
+		*out = new(int32)
+		**out = **in
+	}
 	return
 }
 
@@ -284,6 +289,10 @@ func (in *FlinkJobStatus) DeepCopyInto(out *FlinkJobStatus) {
 	}
 	if in.LastCheckpointTime != nil {
 		in, out := &in.LastCheckpointTime, &out.LastCheckpointTime
+		*out = (*in).DeepCopy()
+	}
+	if in.LastSavepointTime != nil {
+		in, out := &in.LastSavepointTime, &out.LastSavepointTime
 		*out = (*in).DeepCopy()
 	}
 	return

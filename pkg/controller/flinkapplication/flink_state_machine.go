@@ -207,6 +207,26 @@ func (s *FlinkStateMachine) handle(ctx context.Context, application *v1beta1.Fli
 	return updateApplication || updateLastSeenError, appErr
 }
 
+func (s *FlinkStateMachine) AutoSavepoint(application *v1beta1.FlinkApplication) {
+	var shouldAutoSavepoint = false
+	if application.Status.LastSavepointTime != nil {
+		application.Status.LastSavepointTime.Add(time.Duration())
+	} else {
+		shouldAutoSavepoint = true
+	}
+}
+
+// Convert raw time to object and add `addedSeconds` to it,
+// getting a time object for the parsed `rawTime` with `addedSeconds` added to it.
+func getTimeAfterAddedSeconds(rawTime string, addedSeconds int64) time.Time {
+	var tc = &TimeConverter{}
+	var lastTriggerTime = time.Time{}
+	if len(rawTime) != 0 {
+		lastTriggerTime = tc.FromString(rawTime)
+	}
+	return lastTriggerTime.Add(time.Duration(addedSeconds * int64(time.Second)))
+}
+
 func (s *FlinkStateMachine) IsTimeToHandlePhase(application *v1beta1.FlinkApplication, phase v1beta1.FlinkApplicationPhase) bool {
 	if phase == v1beta1.FlinkApplicationDeleting {
 		// reset lastSeenError and retryCount in case the application was failing in its previous phase
