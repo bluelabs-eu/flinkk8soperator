@@ -1,4 +1,4 @@
-current_version="1.0.7"
+current_version="1.0.8"
 debug=false
 while true; do
     read -p "Build as debug version? [no]: " yn
