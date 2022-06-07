@@ -1,7 +1,7 @@
 apiVersion: v2
 name: lyft-flink-k8s-operator
-version: 1.0.15
-appVersion: 1.0.7
+version: 1.0.16
+appVersion: 1.0.8
 description: Flink Operator by Lyft
 type: application
 keywords:

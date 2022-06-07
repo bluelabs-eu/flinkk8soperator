@@ -2,12 +2,10 @@ package flink
 
 import (
 	"fmt"
+	"github.com/benlaurie/objecthash/go/objecthash"
 	"hash/fnv"
 	"math/rand"
 	"strings"
-	"time"
-
-	"github.com/benlaurie/objecthash/go/objecthash"
 
 	"github.com/lyft/flinkk8soperator/pkg/apis/app/v1beta1"
 	"github.com/lyft/flinkk8soperator/pkg/controller/common"
@@ -212,9 +210,9 @@ func InjectOperatorCustomizedConfig(deployment *appsv1.Deployment, app *v1beta1.
 		for _, env := range container.Env {
 			if env.Name == OperatorFlinkConfig {
 				if isHAEnabled(app.Spec.FlinkConfig) {
-					env.Value = fmt.Sprintf("%s\nhigh-availability.cluster-id: %s-%s-%s\n", env.Value, app.Name, hash, time.Now().Format("20060102150405"))
+					env.Value = fmt.Sprintf("%s\nhigh-availability.cluster-id: %s-%s\n", env.Value, app.Name, hash)
 					if !strings.Contains(env.Value, "kubernetes.cluster-id") {
-						env.Value = fmt.Sprintf("%s\nkubernetes.cluster-id: %s-%s-%s\n", env.Value, app.Name, hash, time.Now().Format("20060102150405"))
+						env.Value = fmt.Sprintf("%s\nkubernetes.cluster-id: %s-%s\n", env.Value, app.Name, hash)
 					}
 					if deploymentType == FlinkDeploymentTypeJobmanager {
 						env.Value = fmt.Sprintf("%sjobmanager.rpc.address: $HOST_IP\n", env.Value)
