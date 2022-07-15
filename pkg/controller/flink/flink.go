@@ -64,6 +64,8 @@ type ControllerInterface interface {
 	// Polls the status of the Savepoint, using the triggerID
 	GetSavepointStatus(ctx context.Context, application *v1beta1.FlinkApplication, hash string, jobID string) (*client.SavepointResponse, error)
 
+	GetSavepointStatusFromTriggerId(ctx context.Context, application *v1beta1.FlinkApplication, hash string, jobID string, triggerId string) (*client.SavepointResponse, error)
+
 	// Check if the Flink Kubernetes Cluster is Ready.
 	// Checks if all the pods of task and job managers are ready.
 	IsClusterReady(ctx context.Context, application *v1beta1.FlinkApplication) (bool, error)
@@ -310,6 +312,10 @@ func (f *Controller) StartFlinkJob(ctx context.Context, application *v1beta1.Fli
 
 func (f *Controller) GetSavepointStatus(ctx context.Context, application *v1beta1.FlinkApplication, hash string, jobID string) (*client.SavepointResponse, error) {
 	return f.flinkClient.CheckSavepointStatus(ctx, f.getURLFromApp(application, hash), jobID, application.Status.SavepointTriggerID)
+}
+
+func (f *Controller) GetSavepointStatusFromTriggerId(ctx context.Context, application *v1beta1.FlinkApplication, hash string, jobID string, triggerId string) (*client.SavepointResponse, error) {
+	return f.flinkClient.CheckSavepointStatus(ctx, f.getURLFromApp(application, hash), jobID, triggerId)
 }
 
 func (f *Controller) IsClusterReady(ctx context.Context, application *v1beta1.FlinkApplication) (bool, error) {

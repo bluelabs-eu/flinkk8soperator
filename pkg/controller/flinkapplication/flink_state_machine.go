@@ -180,7 +180,10 @@ func (s *FlinkStateMachine) handle(ctx context.Context, application *v1beta1.Fli
 		case v1beta1.FlinkApplicationSubmittingJob:
 			updateApplication, appErr = s.handleSubmittingJob(ctx, application)
 		case v1beta1.FlinkApplicationRunning, v1beta1.FlinkApplicationDeployFailed:
-			updateApplication, appErr = s.handleApplicationRunning(ctx, application)
+			var updateAppAutosavepoint = s.AutoSavepoint(ctx, application)
+			var updateAppHandleRunningStatus, err = s.handleApplicationRunning(ctx, application)
+			appErr = err
+			updateApplication = updateAppAutosavepoint || updateAppHandleRunningStatus
 		case v1beta1.FlinkApplicationCancelling:
 			updateApplication, appErr = s.handleApplicationCancelling(ctx, application)
 		case v1beta1.FlinkApplicationSavepointing:
@@ -207,24 +210,48 @@ func (s *FlinkStateMachine) handle(ctx context.Context, application *v1beta1.Fli
 	return updateApplication || updateLastSeenError, appErr
 }
 
-func (s *FlinkStateMachine) AutoSavepoint(application *v1beta1.FlinkApplication) {
+func (s *FlinkStateMachine) AutoSavepoint(ctx context.Context, application *v1beta1.FlinkApplication) bool {
 	var shouldAutoSavepoint = false
-	if application.Status.LastSavepointTime != nil {
-		application.Status.LastSavepointTime.Add(time.Duration())
+	if application.Status.LastAutoSavepointTime != nil {
+		var nextSavepointTime = application.Status.LastAutoSavepointTime.Add(time.Second * time.Duration(*application.Spec.AutoSavepointSeconds))
+		if s.clock.Now().After(nextSavepointTime) {
+			shouldAutoSavepoint = true
+		}
 	} else {
 		shouldAutoSavepoint = true
 	}
+	if shouldAutoSavepoint {
+		s.flinkController.LogEvent(ctx, application, corev1.EventTypeNormal, "SavepointingJob",
+			fmt.Sprintf("Autosavepointing job %s", s.flinkController.GetLatestJobID(ctx, application)))
+		triggerID, err := s.flinkController.Savepoint(ctx, application, application.Status.DeployHash, false, s.flinkController.GetLatestJobID(ctx, application))
+		if err != nil {
+			logger.Errorf(ctx, "AutoSavepointing failed with err: %v", err)
+			return statusUnchanged
+		}
+		go s.checkAndLogAutoSavepointStatus(ctx, application, triggerID)
+		now := v1.NewTime(s.clock.Now())
+		application.Status.LastAutoSavepointTime = &now
+		return statusChanged
+	}
+	return statusUnchanged
 }
 
-// Convert raw time to object and add `addedSeconds` to it,
-// getting a time object for the parsed `rawTime` with `addedSeconds` added to it.
-func getTimeAfterAddedSeconds(rawTime string, addedSeconds int64) time.Time {
-	var tc = &TimeConverter{}
-	var lastTriggerTime = time.Time{}
-	if len(rawTime) != 0 {
-		lastTriggerTime = tc.FromString(rawTime)
+func (s *FlinkStateMachine) checkAndLogAutoSavepointStatus(ctx context.Context, application *v1beta1.FlinkApplication, savepointTriggerId string) {
+	for i := 0; i < 60; i++ {
+		savepointStatusResponse, err := s.flinkController.GetSavepointStatusFromTriggerId(ctx, application, application.Status.DeployHash, s.flinkController.GetLatestJobID(ctx, application), savepointTriggerId)
+		if err != nil {
+			logger.Errorf(ctx, "AutoSavepoint status failed with err: %v", err)
+		} else {
+			if savepointStatusResponse.SavepointStatus.Status == client.SavePointCompleted {
+				s.flinkController.LogEvent(ctx, application, corev1.EventTypeNormal, "AutoSavepointCompleted",
+					fmt.Sprintf("Completed auto-savepoint at %s", savepointStatusResponse.Operation.Location))
+				return
+			}
+		}
+		logger.Debugf(ctx, "Could not retrieve completed savepoint status. Retrying in 1 second")
+		time.Sleep(1 * time.Second)
 	}
-	return lastTriggerTime.Add(time.Duration(addedSeconds * int64(time.Second)))
+	logger.Errorf(ctx, "Giving up. Could not retrieve completed savepoint status after a minute from triggering savepoint")
 }
 
 func (s *FlinkStateMachine) IsTimeToHandlePhase(application *v1beta1.FlinkApplication, phase v1beta1.FlinkApplicationPhase) bool {
