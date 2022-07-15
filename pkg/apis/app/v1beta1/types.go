@@ -60,6 +60,7 @@ type FlinkApplicationSpec struct {
 	ForceRollback                  bool                `json:"forceRollback"`
 	MaxCheckpointRestoreAgeSeconds *int32              `json:"maxCheckpointRestoreAgeSeconds,omitempty"`
 	TearDownVersionHash            string              `json:"tearDownVersionHash,omitempty"`
+	AutoSavepointSeconds           *int32              `json:"autoSavepointSeconds,omitempty"`
 }
 
 type FlinkConfig map[string]interface{}
@@ -193,6 +194,7 @@ type FlinkApplicationStatus struct {
 	SavepointPath          string                          `json:"savepointPath,omitempty"`
 	RetryCount             int32                           `json:"retryCount,omitempty"`
 	LastSeenError          *FlinkApplicationError          `json:"lastSeenError,omitempty"`
+	LastAutoSavepointTime  *metav1.Time                    `json:"lastAutoSavepointTime,omitempty"`
 	// We store deployment mode in the status to prevent incompatible migrations from
 	// Dual --> BlueGreen and BlueGreen --> Dual
 	DeploymentMode DeploymentMode `json:"deploymentMode,omitempty"`
