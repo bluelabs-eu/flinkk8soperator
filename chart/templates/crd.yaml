@@ -123,6 +123,8 @@ spec:
                   type: string
                 savepointDisabled:
                   type: boolean
+                autoSavepointSeconds:
+                  type: integer
                 maxCheckpointRestoreAgeSeconds:
                   type: integer
                   minimum: 1

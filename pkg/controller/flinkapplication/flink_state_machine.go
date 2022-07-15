@@ -212,7 +212,7 @@ func (s *FlinkStateMachine) handle(ctx context.Context, application *v1beta1.Fli
 
 func (s *FlinkStateMachine) AutoSavepoint(ctx context.Context, application *v1beta1.FlinkApplication) bool {
 	var shouldAutoSavepoint = false
-	if application.Status.LastAutoSavepointTime != nil {
+	if application.Status.LastAutoSavepointTime != nil && application.Spec.AutoSavepointSeconds != nil && *application.Spec.AutoSavepointSeconds > 0 {
 		var nextSavepointTime = application.Status.LastAutoSavepointTime.Add(time.Second * time.Duration(*application.Spec.AutoSavepointSeconds))
 		if s.clock.Now().After(nextSavepointTime) {
 			shouldAutoSavepoint = true
